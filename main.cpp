@@ -27,6 +27,7 @@
 
 bool debugFlag = false;
 bool runOnce = false;
+bool scanStopByte = false;
 bool ups_leave = false;
 
 cInverter *ups = NULL;
@@ -173,6 +174,9 @@ int main(int argc, char* argv[]) {
     }
     if(cmdArgs.cmdOptionExists("-1") || cmdArgs.cmdOptionExists("--run-once")) {
         runOnce = true;
+    }
+    if(cmdArgs.cmdOptionExists("-s") || cmdArgs.cmdOptionExists("--scan")) {
+        scanStopByte = true;
     }
     lprintf("INVERTER: Debug set");
     const char *settings;

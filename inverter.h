@@ -22,7 +22,7 @@ class cInverter {
 
     void SetMode(char newmode);
     bool CheckCRC(unsigned char *buff, int len);
-    bool query(const char *cmd, int replysize);
+    bool query(const char *cmd, int replysize, bool scan);
     uint16_t cal_crc_half(uint8_t *pin, uint8_t len);
 
     public:

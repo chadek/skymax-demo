@@ -67,10 +67,14 @@ int cInverter::GetMode() {
     return result;
 }
 
-bool cInverter::query(const char *cmd, int replysize) {
+bool cInverter::query(const char *cmd, int replysize, bool scan = false) {
     time_t started;
     int fd;
     int i=0, n;
+
+    if (scan) {
+        replysize = 200;
+    }
 
     fd = open(this->device.data(), O_RDWR | O_NONBLOCK);
     if (fd == -1) {
@@ -134,8 +138,21 @@ bool cInverter::query(const char *cmd, int replysize) {
 
         lprintf("INVERTER: %s reply size (%d bytes)", cmd, i);
 
-        if (buf[0]!='(' || buf[replysize-1]!=0x0d) {
-            lprintf("INVERTER: %s: incorrect start/stop bytes.  Buffer: %s", cmd, buf);
+        if (buf[0]!='(') {
+            lprintf("INVERTER: %s: incorrect start bytes.  Buffer: %s", cmd, buf);
+            return false;
+        }
+        if (scan) {
+            for (int j=0; j<replysize; j++) {
+                if (buf[j] == 0x0d){
+                    replysize = j+1;
+                    printf("INVERTER: stop byte detected, buffersize might be %d for %s", replysize, cmd);
+                    break;
+                }
+            }
+        }
+        if (buf[replysize-1]!=0x0d) {
+            lprintf("INVERTER: %s: incorrect stop bytes.  Buffer: %s", cmd, buf);
             return false;
         }
         if (!(CheckCRC(buf, replysize))) {
@@ -210,7 +227,8 @@ void cInverter::poll() {
 
 void cInverter::ExecuteCmd(const string cmd, int replylen) {
     // Sending any command raw
-    if (query(cmd.data(), replylen)) {
+    extern const bool scanStopByte;
+    if (query(cmd.data(), replylen, scanStopByte)) {
         m.lock();
         strcpy(status2, (const char*)buf+1);
         m.unlock();
